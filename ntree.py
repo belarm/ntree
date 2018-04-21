@@ -7,7 +7,7 @@ MAX_DIM = 2**10
 e = [2 ** n for n in range(MAX_DIM)]
 
 class ntree(object):
-    def __init__(self, minimums, maximums):
+    def __init__(self, minimums, maximums, value=None):
         '''Given the minimum and maximum co-ordinates of an n-dimensional rectangular
         prism, returns a 2**n-tree for sorting points in that space'''
         # There is no intrinsic difference between these, save possibly for the 'sign'
@@ -17,6 +17,15 @@ class ntree(object):
 
         self.center = minimums + maximums / 2
         self.children = {}
+        self.value = value
+
+    @property
+    def val(self):
+        if self.value is not None:
+            return self.value
+        else:
+            # TODO: We need to return an aggregate of self.children here
+            return None
 
     def route(self, point):
         d = len(point)
@@ -44,3 +53,4 @@ class ntree(object):
 n = ntree(np.array([0,0,0,0]),np.array([15,15,15,15]))
 # Find the position of a 12-d point in layer 1 of n:
 print(n.route(np.array([12,9,9,0,0,0,0,1,0,0,0,1])))
+print(n.val)
