@@ -17,12 +17,13 @@ class ntree(object):
 
         self.center = minimums + maximums / 2
         self.children = {}
-        self.value = value
+        self._value = value
 
     @property
     def val(self):
-        if self.value is not None:
-            return self.value
+        # Should it be an error to evaluate the val of a branch node?
+        if self._value is not None:
+            return self._value
         else:
             # TODO: We need to return an aggregate of self.children here
             return None
@@ -47,7 +48,26 @@ class ntree(object):
 
         # We'll need to be able to re-order basis here.
         # NO WE WON'T! Instead, we can change the comparator function used when sorting keys of self.children
+        # Right now, this implies Z-order
         return np.dot((point > center), basis)
+
+    @property
+    def isleaf(self):
+        # Python dictionaries evaluate to false when empty
+        return bool(self.children)
+
+    def child_center(self, child):
+        '''Given the index of a child, returns the center of said child's space'''
+        pass
+
+
+    def add(self, point):
+        if self.isleaf:
+            # Need to move our current value to a child and become a branch node
+            self.children[self.route(self._value)] = ntree(..., ..., self._value)
+            self._value = None
+
+
 
 
 n = ntree(np.array([0,0,0,0]),np.array([15,15,15,15]))
