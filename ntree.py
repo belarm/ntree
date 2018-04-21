@@ -12,10 +12,13 @@ class ntree(object):
         prism, returns a 2**n-tree for sorting points in that space'''
         # There is no intrinsic difference between these, save possibly for the 'sign'
         # of the implied basis vectors, which we should be able to abstract away.
-        self.white_corner = minimums
-        self.black_corner = maximums
+        if len(minimums) != len(maximums):
+            raise ValueError("Mimimums and maximums must be the same length(dimension)")
+        self.minimums = minimums
+        self.maximums = maximums
 
-        self.center = minimums + maximums / 2
+        self.center = (minimums + maximums) / 2
+        self.radii = (maximums - minimums) / 2
         self.children = {}
         self._value = value
 
@@ -56,9 +59,32 @@ class ntree(object):
         # Python dictionaries evaluate to false when empty
         return bool(self.children)
 
-    def child_center(self, child):
+    # def child_bounding_box(self, child):
+    #     ls = []
+    #     hs = []
+    #     for l,c,h in zip(self.minimums, self.center, self.maximums):
+    #
+    #     for bool(int(b)) in reversed('{:b}'.format(child)):
+    #         if
+
+
+    def child_bounding_box(self, child):
         '''Given the index of a child, returns the center of said child's space'''
-        pass
+         # HACK
+        bits = [int(b) for b in reversed('{:b}'.format(child))]
+        bits += (len(self.center) - len(bits)) * [0]
+        bitvec = np.array(bits)
+        # bitvec = bitvec * 2 - 1 # {0,1} -> {-1,1}
+        # In each dimension, take an average weighted by 3/4 towards the child node to find the new center
+        newmin = self.minimums + self.radii * bitvec
+        newmax = newmin + self.radii
+        return newmin, newmax
+        # h = []
+        #
+        # return ((2 + bitvec) * self.maximums + (2 - bitvec) * self.minimums) / 4
+
+    # np.array([int(_) for _ in reversed("{:b}".format(n-1))],dtype=np.bool)
+        # pass
 
 
     def add(self, point):
@@ -70,7 +96,10 @@ class ntree(object):
 
 
 
-n = ntree(np.array([0,0,0,0]),np.array([15,15,15,15]))
+n = ntree(np.array([0,0,0,0]),np.array([16,16,16,16]))
 # Find the position of a 12-d point in layer 1 of n:
 print(n.route(np.array([12,9,9,0,0,0,0,1,0,0,0,1])))
-print(n.val)
+print(n.radii)
+print(n.center)
+for i in range(16):
+    print(n.child_bounding_box(i))
