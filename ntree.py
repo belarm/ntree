@@ -4,9 +4,9 @@ import numpy as np
 from sklearn.datasets import fetch_mldata
 mnist = fetch_mldata('MNIST original')
 
-MAX_DIM = 2**10
+# MAX_DIM = 2**10
 
-e = [2 ** n for n in range(MAX_DIM)]
+# e = [2 ** n for n in range(MAX_DIM)]
 
 class ntree(object):
     def __init__(self, minimums, maximums, point=None, value=None):
@@ -51,12 +51,12 @@ class ntree(object):
             # Hey, we got a point of the same dimension as us! Neat!
             center = self.center
         # Grab the relevant portion of our basis diagonal
-        basis = e[0:d]
+        # basis = e[0:d]
 
         # We'll need to be able to re-order basis here.
         # NO WE WON'T! Instead, we can change the comparator function used when sorting keys of self.children
         # Right now, this implies Z-order
-        return np.dot((point > center), basis)
+        return point > center
 
     @property
     def isleaf(self):
@@ -75,7 +75,8 @@ class ntree(object):
     def child_bounding_box(self, child):
         '''Given the index of a child, returns the bounding prism of said child's space'''
          # HACK
-        bits = [int(b) for b in reversed('{:b}'.format(child))]
+        # bits = [int(b) for b in reversed('{:b}'.format(child))]
+        bits = self.route(child).tolist()
         bits += (len(self.center) - len(bits)) * [0]
         bitvec = np.array(bits)
         # bitvec = bitvec * 2 - 1 # {0,1} -> {-1,1}
@@ -108,19 +109,31 @@ class ntree(object):
                 self.value = value
                 return self
             # Else, we need to move our current value to a child and become a branch node
-            child = self.route(self.point)
+            child = tuple(self.route(self.point))
             self.children[child] = self.mkchild(child, self.point, self.value)
             self.value = None
             self.point = self.center
             # And now we're ready to fall through and add the new point
         # else:
         # print("branch")
-        target = self.route(point)
+        target = tuple(self.route(point))
         if target not in self.children:
             self.children[target] = self.mkchild(target, point, value)
             return self.children[target]
         else:
             return self.children[target].add(point,value)
+
+    def __str__(self):
+        if not self.isleaf:
+            return self.children.__str__()
+        else:
+            return (str(self.point), str(self.value))
+
+    def __repr__(self):
+        if not self.isleaf:
+            return self.children.__repr__()
+        else:
+            return repr((repr(self.point), repr(self.value)))
 
 
 
@@ -130,11 +143,13 @@ n = ntree(np.array([0] * 784),np.array([256] * 784))
 # OK. Let's load MNIST!
 
 i = 0
-for d, t in zip(mnist.data, mnist.target):
+for d, t in zip(mnist.data[0:10], mnist.target[0:10]):
     i += 1
     if i % 100 == 0:
         print(i)
     n.add(d,t)
+from pprint import pprint
+print(n)
 # Run time on my POS:  54.824s
 
 
