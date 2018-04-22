@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 import numpy as np
+from sklearn.datasets import fetch_mldata
+mnist = fetch_mldata('MNIST original')
 
 MAX_DIM = 2**10
 
@@ -101,7 +103,7 @@ class ntree(object):
                 self.point = point
                 self.value = value
                 return self
-            if self.point == point:
+            if (self.point == point).all():
                 # We're updating the value of an existing point; no change to structure
                 self.value = value
                 return self
@@ -123,19 +125,35 @@ class ntree(object):
 
 
 
-n = ntree(np.array([0,0,0,0]),np.array([16,16,16,16]) * 2)
-# Find the position of a 12-d point in layer 1 of n:
-# print(n.route(np.array([12,9,9,0,0,0,0,1,0,0,0,1])))
-print(n.route(np.array([1,10,20])))
-n.add(np.array([1,10,3]), 'Bob')
-n.add(np.array([1,10,20]), 'Alice')
-n.add(np.array([1,10,21]), 'Carol')
-# print(n.val)
-print(n.children.keys())
-#
-#
-#
-# print(n.radii)
-# print(n.center)
-# for i in range(16):
-#     print(n.child_bounding_box(i))
+n = ntree(np.array([0] * 784),np.array([256] * 784))
+
+# OK. Let's load MNIST!
+
+i = 0
+for d, t in zip(mnist.data, mnist.target):
+    i += 1
+    if i % 100 == 0:
+        print(i)
+    n.add(d,t)
+# Run time on my POS:  54.824s
+
+
+
+
+# # n = ntree(np.array([0,0,0,0]),np.array([32,32,32,32]))
+# # Find the position of a 12-d point in layer 1 of n:
+# # print(n.route(np.array([12,9,9,0,0,0,0,1,0,0,0,1])))
+# print(n.route(np.array([1,10,20])))
+# n.add(np.array([1,10,3]), 'Bob')
+# n.add(np.array([1,10,20]), 'Alice')
+# n.add(np.array([1,10,21]), 'Carol')
+# # print(n.val)
+# print(n.children.keys())
+# print(mnist.data[0].shape)
+# #
+# #
+# #
+# # print(n.radii)
+# # print(n.center)
+# # for i in range(16):
+# #     print(n.child_bounding_box(i))
