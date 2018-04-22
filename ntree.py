@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 
 import numpy as np
-from sklearn.datasets import fetch_mldata
-mnist = fetch_mldata('MNIST original')
 
 # MAX_DIM = 2**10
 
@@ -137,19 +135,23 @@ class ntree(object):
 
 
 
+if __name__ == '__main__':
+    from sklearn.datasets import fetch_mldata
+    mnist = fetch_mldata('MNIST original')
 
-n = ntree(np.array([0] * 784),np.array([256] * 784))
+    # Range: {0,1,...,255} ^ 784
+    n = ntree(np.array([0] * 784),np.array([256] * 784))
 
-# OK. Let's load MNIST!
+    # OK. Let's load MNIST!
 
-i = 0
-for d, t in zip(mnist.data[0:10], mnist.target[0:10]):
-    i += 1
-    if i % 100 == 0:
-        print(i)
-    n.add(d,t)
-from pprint import pprint
-print(n)
+    i = 0
+    for d, t in zip(mnist.data[0:10], mnist.target[0:10]):
+        i += 1
+        if i % 100 == 0:
+            print(i)
+        n.add(d,t)
+    from pprint import pprint
+    print(n)
 # Run time on my POS:  54.824s
 
 
