@@ -7,7 +7,7 @@ MAX_DIM = 2**10
 e = [2 ** n for n in range(MAX_DIM)]
 
 class ntree(object):
-    def __init__(self, minimums, maximums, value=None):
+    def __init__(self, minimums, maximums, point=None, value=None):
         '''Given the minimum and maximum co-ordinates of an n-dimensional rectangular
         prism, returns a 2**n-tree for sorting points in that space'''
         # There is no intrinsic difference between these, save possibly for the 'sign'
@@ -20,13 +20,15 @@ class ntree(object):
         self.center = (minimums + maximums) / 2
         self.radii = (maximums - minimums) / 2
         self.children = {}
-        self._value = value
+        self.value = value
+        self.point = point
+        # print("Created node:\n\t{}\n\t{}\n\t{}".format(self.center, self.radii, self.point))
 
     @property
     def val(self):
         # Should it be an error to evaluate the val of a branch node?
-        if self._value is not None:
-            return self._value
+        if self.value is not None:
+            return self.value
         else:
             # TODO: We need to return an aggregate of self.children here
             return None
@@ -57,7 +59,7 @@ class ntree(object):
     @property
     def isleaf(self):
         # Python dictionaries evaluate to false when empty
-        return bool(self.children)
+        return not bool(self.children)
 
     # def child_bounding_box(self, child):
     #     ls = []
@@ -69,7 +71,7 @@ class ntree(object):
 
 
     def child_bounding_box(self, child):
-        '''Given the index of a child, returns the center of said child's space'''
+        '''Given the index of a child, returns the bounding prism of said child's space'''
          # HACK
         bits = [int(b) for b in reversed('{:b}'.format(child))]
         bits += (len(self.center) - len(bits)) * [0]
@@ -83,23 +85,57 @@ class ntree(object):
         #
         # return ((2 + bitvec) * self.maximums + (2 - bitvec) * self.minimums) / 4
 
+    def mkchild(self, child, point=None, value=None):
+        return ntree(*self.child_bounding_box(child), point, value)
+
     # np.array([int(_) for _ in reversed("{:b}".format(n-1))],dtype=np.bool)
         # pass
 
 
-    def add(self, point):
+    def add(self, point, value):
         if self.isleaf:
-            # Need to move our current value to a child and become a branch node
-            self.children[self.route(self._value)] = ntree(..., ..., self._value)
-            self._value = None
+            # print("leaf found inserting {}:{}".format(point,value))
+            if self.value is None:
+
+                # print("We're a leaf without a value - assume a value and return")
+                self.point = point
+                self.value = value
+                return self
+            if self.point == point:
+                # We're updating the value of an existing point; no change to structure
+                self.value = value
+                return self
+            # Else, we need to move our current value to a child and become a branch node
+            child = self.route(self.point)
+            self.children[child] = self.mkchild(child, self.point, self.value)
+            self.value = None
+            self.point = self.center
+            # And now we're ready to fall through and add the new point
+        # else:
+        # print("branch")
+        target = self.route(point)
+        if target not in self.children:
+            self.children[target] = self.mkchild(target, point, value)
+            return self.children[target]
+        else:
+            return self.children[target].add(point,value)
 
 
 
 
-n = ntree(np.array([0,0,0,0]),np.array([16,16,16,16]))
+n = ntree(np.array([0,0,0,0]),np.array([16,16,16,16]) * 2)
 # Find the position of a 12-d point in layer 1 of n:
-print(n.route(np.array([12,9,9,0,0,0,0,1,0,0,0,1])))
-print(n.radii)
-print(n.center)
-for i in range(16):
-    print(n.child_bounding_box(i))
+# print(n.route(np.array([12,9,9,0,0,0,0,1,0,0,0,1])))
+print(n.route(np.array([1,10,20])))
+n.add(np.array([1,10,3]), 'Bob')
+n.add(np.array([1,10,20]), 'Alice')
+n.add(np.array([1,10,21]), 'Carol')
+# print(n.val)
+print(n.children.keys())
+#
+#
+#
+# print(n.radii)
+# print(n.center)
+# for i in range(16):
+#     print(n.child_bounding_box(i))
